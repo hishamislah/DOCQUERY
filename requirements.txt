@@ -1,0 +1,15 @@
+streamlit
+pandas
+openpyxl
+ollama
+tabulate
+pdfplumber
+torch==2.2.2
+transformers
+langchain
+langchain-community
+langchain-huggingface
+faiss-cpu
+sentence-transformers
+pymupdf
+
