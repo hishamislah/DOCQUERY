@@ -33,14 +33,26 @@ def process_file(file):
         return "unknown", None
 
 def handle_query(question, content):
-    if isinstance(content, pd.DataFrame):
-        return query_data(question, content)
-    elif isinstance(content, str):
-        return query_pdf_text(question, content)
-    else:
-        return "Unsupported document format."
+    # LLM/model failure handler
+    try:
+        if isinstance(content, pd.DataFrame):
+            if content.empty:
+                return "This document is empty. Please upload a valid file."
+            return query_data(question, content)
+        elif isinstance(content, str):
+            if not content.strip():
+                return "This document is empty. Please upload a valid file."
+            return query_pdf_text(question, content)
+        else:
+            return "Unsupported document format."
+    except Exception as e:
+        return f"Sorry, there was an error processing your question: {e}"
+
 def handle_uploaded_file(uploaded_file):
     content = extract_content(uploaded_file)  # pdf/csv/txt parser
+    # Empty content fallback
+    if (isinstance(content, pd.DataFrame) and content.empty) or (isinstance(content, str) and not content.strip()):
+        return "empty", None
     doc_type = classify_doc_type(content)     # attendance or invoice
     return doc_type, content
 
@@ -73,12 +85,13 @@ def classify_doc_type(content):
         return detect_document_type(content)
     elif isinstance(content, str):
         # crude check for PDF text
-        if "invoice" in content.lower():
+        lowered = content.lower()
+        if "invoice" in lowered:
             return "invoice"
-        elif "attendance" in content.lower():
+        elif "attendance" in lowered:
             return "attendance"
         else:
-            return "pdf_text"
+            return "unknown"  # was 'pdf_text', now 'unknown' for manual handling
     else:
         return "unknown"
 
@@ -90,3 +103,10 @@ def answer_invoice(content, query):
 
 def default_llm_response(query):
     return f"Sorry, I couldn't find a specific answer. Here is a generic response to: {query}"
+
+# Multi-document conflict handler stub (for future extension)
+def handle_conflicting_answers(answers):
+    # If multiple docs give conflicting answers, show all and let user choose
+    if len(set(answers)) > 1:
+        return "Multiple documents provide different answers:\n" + "\n---\n".join(answers)
+    return answers[0] if answers else "No answer found."
