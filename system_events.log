@@ -1,0 +1,10 @@
+2025-06-17 11:53:38,211 [INFO] logic.agent_controller: Handling uploaded file: attendance.csv
+2025-06-17 11:53:38,213 [INFO] logic.agent_controller: Classified uploaded file attendance.csv as type: attendance
+2025-06-17 11:53:38,213 [INFO] logic.agent_controller: Handling uploaded file: invoice.csv
+2025-06-17 11:53:38,215 [INFO] logic.agent_controller: Classified uploaded file invoice.csv as type: invoice
+2025-06-17 11:53:49,819 [INFO] logic.agent_controller: Handling uploaded file: attendance.csv
+2025-06-17 11:53:49,821 [INFO] logic.agent_controller: Classified uploaded file attendance.csv as type: attendance
+2025-06-17 11:53:49,821 [INFO] logic.agent_controller: Handling uploaded file: invoice.csv
+2025-06-17 11:53:49,823 [INFO] logic.agent_controller: Classified uploaded file invoice.csv as type: invoice
+2025-06-17 11:53:49,836 [INFO] logic.agent_controller: Handling query: 'what is price of pen'
+2025-06-17 11:53:57,953 [INFO] httpx: HTTP Request: POST http://127.0.0.1:11434/api/chat "HTTP/1.1 200 OK"

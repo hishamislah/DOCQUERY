@@ -1,23 +1,36 @@
 import pandas as pd
 import pdfplumber
 import io
+import logging
 from .document_loader import load_document
 from .parser import detect_document_type
 from chatbot.query_engine import query_data, query_pdf_text
 
-
+# Logging configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[
+        logging.FileHandler("system_events.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def process_file(file):
     filename = file.name.lower()
+    logger.info(f"Processing file: {filename}")
     
     if filename.endswith(".csv"):
         df = pd.read_csv(file)
         doc_type = detect_document_type(df)
+        logger.info(f"Detected document type: {doc_type} for file: {filename}")
         return doc_type, df
 
     elif filename.endswith(".xlsx"):
         df = pd.read_excel(file)
         doc_type = detect_document_type(df)
+        logger.info(f"Detected document type: {doc_type} for file: {filename}")
         return doc_type, df
 
     elif filename.endswith(".pdf"):
@@ -26,37 +39,47 @@ def process_file(file):
             all_text = ""
             for page in pdf.pages:
                 all_text += page.extract_text() + "\n"
-
+        logger.info(f"Extracted text from PDF file: {filename}")
         return "pdf_text", all_text  # Will return plain text instead of DataFrame
 
     else:
+        logger.warning(f"Unknown file type for file: {filename}")
         return "unknown", None
 
 def handle_query(question, content):
+    logger.info(f"Handling query: '{question}'")
     # LLM/model failure handler
     try:
         if isinstance(content, pd.DataFrame):
             if content.empty:
+                logger.warning("Query on empty DataFrame.")
                 return "This document is empty. Please upload a valid file."
             return query_data(question, content)
         elif isinstance(content, str):
             if not content.strip():
+                logger.warning("Query on empty text content.")
                 return "This document is empty. Please upload a valid file."
             return query_pdf_text(question, content)
         else:
+            logger.error("Unsupported document format for query.")
             return "Unsupported document format."
     except Exception as e:
+        logger.error(f"Error processing query: {e}")
         return f"Sorry, there was an error processing your question: {e}"
 
 def handle_uploaded_file(uploaded_file):
+    logger.info(f"Handling uploaded file: {uploaded_file.name}")
     content = extract_content(uploaded_file)  # pdf/csv/txt parser
     # Empty content fallback
     if (isinstance(content, pd.DataFrame) and content.empty) or (isinstance(content, str) and not content.strip()):
+        logger.warning(f"Uploaded file {uploaded_file.name} is empty.")
         return "empty", None
-    doc_type = classify_doc_type(content)     # attendance or invoice
+    doc_type = classify_doc_type(content)
+    logger.info(f"Classified uploaded file {uploaded_file.name} as type: {doc_type}")
     return doc_type, content
 
 def route_query(doc_type, content, query):
+    logger.info(f"Routing query for doc_type: {doc_type}")
     if doc_type == "attendance":
         return answer_attendance(content, query)
     elif doc_type == "invoice":
