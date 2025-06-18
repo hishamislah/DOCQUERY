@@ -1,3 +1,7 @@
+# document_loader.py
+# Provides functions to load and parse document files (CSV, XLSX) into pandas DataFrames for further processing.
+# Used by the backend logic to standardize document input.
+
 import pandas as pd
 import os
 

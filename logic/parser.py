@@ -1,3 +1,7 @@
+# parser.py
+# Contains logic to detect document types (e.g., attendance, invoice) based on DataFrame content.
+# Used by backend to classify uploaded documents for specialized processing.
+
 def detect_document_type(df):
     # Try to fix rows where header is duplicated
     df = df.dropna(how="all")  # remove fully empty rows

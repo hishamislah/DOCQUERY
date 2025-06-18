@@ -1,3 +1,7 @@
+# langchain_pipeline.py
+# Integrates LangChain and HuggingFace models for document loading, type detection, vectorstore creation, and QA chain building.
+# Supports advanced AI/ML features for DocQuery Agent.
+
 import os
 from langchain_community.document_loaders import PyMuPDFLoader, CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
