@@ -23,6 +23,8 @@ MAIL_USERNAME = 'your_email@example.com'
 MAIL_PASSWORD = 'your_password'
 MAIL_FROM = 'your_email@example.com'
 MAIL_TO = ['recipient@example.com']
+# Set to False to disable email alerts (prevents SMTP connection errors)
+ENABLE_EMAIL_ALERTS = False
 
 
 def get_logger(name, log_type):
@@ -34,18 +36,23 @@ def get_logger(name, log_type):
         logger.addHandler(handler)
         if log_type == 'errors':
             logger.setLevel(logging.ERROR)
-            # Add SMTPHandler for error logger
-            mail_handler = SMTPHandler(
-                mailhost=(MAIL_HOST, MAIL_PORT),
-                fromaddr=MAIL_FROM,
-                toaddrs=MAIL_TO,
-                subject='[DocQuery Agent] System Error Alert',
-                credentials=(MAIL_USERNAME, MAIL_PASSWORD),
-                secure=()
-            )
-            mail_handler.setLevel(logging.ERROR)
-            mail_handler.setFormatter(formatter)
-            logger.addHandler(mail_handler)
+            # Add SMTPHandler for error logger only if enabled
+            if ENABLE_EMAIL_ALERTS:
+                try:
+                    mail_handler = SMTPHandler(
+                        mailhost=(MAIL_HOST, MAIL_PORT),
+                        fromaddr=MAIL_FROM,
+                        toaddrs=MAIL_TO,
+                        subject='[DocQuery Agent] System Error Alert',
+                        credentials=(MAIL_USERNAME, MAIL_PASSWORD),
+                        secure=()
+                    )
+                    mail_handler.setLevel(logging.ERROR)
+                    mail_handler.setFormatter(formatter)
+                    logger.addHandler(mail_handler)
+                except Exception:
+                    # Silently skip if SMTP configuration fails
+                    pass
         else:
             logger.setLevel(logging.INFO)
     return logger

@@ -4,11 +4,10 @@
 
 import os
 from langchain_community.document_loaders import PyMuPDFLoader, CSVLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from langchain_core.prompts import PromptTemplate
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 def load_document(file):
@@ -53,16 +52,34 @@ def get_llm_pipeline():
     return HuggingFacePipeline(pipeline=pipe)
 
 def build_qa_chain(vectorstore):
+    """Return a simple QA callable using retriever + HuggingFacePipeline.
+
+    LangChain v1 favors Runnable composition; we manually format prompt and invoke the LLM.
+    """
     llm = get_llm_pipeline()
     prompt_template = PromptTemplate(
         input_variables=["context", "question"],
-        template="Use the following context to answer the question:\n\n{context}\n\nQuestion: {question}\nAnswer:"
+        template=(
+            "Use the following context to answer the question as accurately as possible.\n"
+            "If the answer is not in the context, say you don't have enough information.\n\n"
+            "Context:\n{context}\n\nQuestion: {question}\nAnswer:"
+        ),
     )
     retriever = vectorstore.as_retriever()
-    chain = LLMChain(prompt=prompt_template, llm=llm)
 
-    def query_func(question):
-        context = retriever.get_relevant_documents(question)
-        return chain.run({"context": context[0].page_content if context else "", "question": question})
+    def query_func(question: str) -> str:
+        docs = retriever.get_relevant_documents(question)
+        # Merge up to first 3 documents for context
+        merged_context = "\n\n".join(d.page_content for d in docs[:3])
+        formatted_prompt = prompt_template.format(context=merged_context, question=question)
+        # HuggingFacePipeline supports __call__ returning text
+        try:
+            result = llm(formatted_prompt)
+            # Some pipelines may return dict; normalize
+            if isinstance(result, dict):
+                return result.get("generated_text", str(result))
+            return result
+        except Exception as e:
+            return f"Model execution error: {e}"
 
     return query_func

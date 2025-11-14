@@ -78,6 +78,7 @@ def system_info_tab():
     st.subheader("llama Status")
     st.success("✅ llama is available")
 
+    # --- Recent Logs Section ---
     st.subheader("Recent Logs")
     log_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs", "errors.log")
     if os.path.exists(log_path):
